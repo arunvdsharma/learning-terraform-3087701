@@ -14,54 +14,43 @@ data "aws_ami" "app_ami" {
   owners = ["979382823631"] # Bitnami
 }
 
-data "aws_vpc" "default" {
-  default = true
+
+module "vpc" {
+  source = "terraform-aws-modules/vpc/aws"
+
+  name = "blog-vpc"
+  cidr = "10.0.0.0/16"
+
+  azs             = ["us-east-1", "us-east-2"]
+  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
+
+  enable_nat_gateway = true
+
+  tags = {
+    Terraform = "true"
+    Environment = "dev"
+  }
+}
+
+module "blog_sg" {
+  source = "terraform-aws-modules/security-group/aws//modules/http-80"
+
+  name        = "blog_web"
+  description = "Security group for web-server with HTTP ports open within VPC"
+  vpc_id      = module.vpc.public_subnets[0].vpc_id
+
+  ingress_rules = ["http-80-tcp", "https-443-tcp"]
+  ingress_cidr_blocks = ["0.0.0.0/0"]
+
+  egress_rules = ["all-all"]
+  egress_cidr_blocks = ["0.0.0.0/0"]
 }
 
 resource "aws_instance" "blog" {
   ami           = data.aws_ami.app_ami.id
   instance_type = var.ec2_instance_type
-  vpc_security_group_ids = [aws_security_group.blog.id]
+  vpc_security_group_ids = [module.aws_security_group.security_group_id]
   tags = {
     Name = "HelloWorld"
   }
-}
-
-resource "aws_security_group" "blog" {
-  name        = "allow_tls"
-  description = "Allow https and https in. Allow all outbound"
-  vpc_id      = data.aws_vpc.default.id
-}
-
-resource "aws_security_group_rule" "blog_http_in"{
-    type             = "ingress" 
-    description      = "incoming https"
-    from_port        = 80
-    to_port          = 80
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-
-    security_group_id = aws_security_group.blog.id
-}
-
-resource "aws_security_group_rule" "blog_https_in"{
-    type             = "ingress" 
-    description      = "incoming https"
-    from_port        = 443
-    to_port          = 443
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-
-    security_group_id = aws_security_group.blog.id
-}
-
-resource "aws_security_group_rule" "blog_everything_out"{
-    type             = "egress" 
-    description      = "outbound all"
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-
-    security_group_id = aws_security_group.blog.id
 }
