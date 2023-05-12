@@ -33,7 +33,7 @@ module "vpc" {
 }
 
 module "blog_sg" {
-  source = "terraform-aws-modules/security-group/aws//modules/http-80"
+  source = "terraform-aws-modules/security-group/aws"
 
   name        = "blog_web"
   description = "Security group for web-server with HTTP ports open within VPC"
@@ -43,7 +43,6 @@ module "blog_sg" {
   ingress_cidr_blocks = ["0.0.0.0/0"]
 
   egress_rules = ["all-all"]
-
   egress_cidr_blocks = ["0.0.0.0/0"]
 }
 
