@@ -30,7 +30,7 @@ resource "aws_instance" "blog" {
 resource "aws_security_group" "blog" {
   name        = "allow_tls"
   description = "Allow https and https in. Allow all outbound"
-  vpc_id      = aws_vpc.default.id
+  vpc_id      = data.aws_vpc.default.id
 }
 
 resource "aws_security_group_rule" "blog_http_in"{
