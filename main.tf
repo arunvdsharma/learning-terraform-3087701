@@ -29,6 +29,7 @@ module "blog_sg" {
   ingress_cidr_blocks = ["0.0.0.0/0"]
 
   egress_rules = ["all-all"]
+  egress_rules[0].name="Outbound"
   egress_cidr_blocks = ["0.0.0.0/0"]
 }
 
